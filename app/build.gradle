@@ -1,0 +1,45 @@
+// Copyright (c) 2017 Magicleap. All right reserved.
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
+    defaultConfig {
+        applicationId "com.uvdev.myapplication"
+        minSdkVersion 16
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    sourceSets {
+        main {
+            res.srcDirs.add(new File("$projectDir/build/distributions/"))
+        }
+    }
+}
+
+task war(type: Zip) {
+    from "$projectDir/src/main/webapp"
+    destinationDir = new File("$projectDir/src/main/assets")
+    baseName = "app"
+    extension = "war"
+}
+
+tasks.preBuild.dependsOn(war)
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.1.0'
+    testCompile 'junit:junit:4.12'
+}
