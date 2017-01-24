@@ -7,8 +7,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.webkit.WebView;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,22 +32,27 @@ public class MyWebView extends WebView {
     }
 
     public void start() {
+        String json = loadStringFromFile(new File(getContext().getFilesDir(), "manifest.json"));
+        Log.d("Test", json);
+        setManifest(new Gson().fromJson(json, JsonObject.class));
+    }
+
+    private void setManifest(JsonObject json) {
+        String startingPage = json.get("initial_page").getAsString();
+        loadData(loadStringFromFile(new File(getContext().getFilesDir(), startingPage)),
+                "text/html", "UTF-8");
+    }
+
+    private String loadStringFromFile(File file) {
         try {
-            FileInputStream is =
-                    new FileInputStream(new File(getContext().getFilesDir(), "manifest.json"));
+            FileInputStream is = new FileInputStream(file);
             int size = is.available();
             byte[] buffer = new byte[size];
             is.read(buffer);
             is.close();
-            String json = new String(buffer, "UTF-8");
-            Log.d("Test", json);
-            setManifest(new JSONObject(json));
-        } catch (IOException|JSONException e) {
+            return new String(buffer, "UTF-8");
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private void setManifest(JSONObject json) {
-
     }
 }
