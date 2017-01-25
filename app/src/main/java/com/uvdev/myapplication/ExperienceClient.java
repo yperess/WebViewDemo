@@ -2,8 +2,12 @@
 
 package com.uvdev.myapplication;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Base64;
+import android.util.Log;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -24,6 +28,22 @@ public class ExperienceClient extends WebViewClient {
 
     public void setSavedInstanceState(Bundle savedInstanceState) {
         mSavedInstanceState = savedInstanceState;
+    }
+
+    @Override
+    public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            Log.d("WebClient", "(deprecated) " + url);
+        }
+        return super.shouldInterceptRequest(view, url);
+    }
+
+    @Override
+    public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Log.d("WebClient", request.getUrl().toString());
+        }
+        return super.shouldInterceptRequest(view, request);
     }
 
     @Override
