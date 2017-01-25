@@ -13,7 +13,7 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.uvdev.myapplication.MainActivity">
 
-    <com.uvdev.myapplication.MyWebView
+    <com.uvdev.myapplication.ExperienceWebView
         android:id="@+id/web_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
