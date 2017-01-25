@@ -16,4 +16,10 @@ function onExperiencePaused() {
 
 function onExperienceResumed() {
   log.innerHTML += Date.now() + ": onExperienceResumed()<br/>";
+  var user = JSON.parse(AppUser.loadSelf());
+  log.innerHTML += Date.now() + ": username? " + user.username + ", icon_url? " + user.icon_url + "<br/>";
+  App.User.loadSelf().then((asyncUser) => {
+    log.innerHTML += Date.now() + ": asyncUser? " + asyncUser + "<br/>";
+  });
+  log.innerHTML += Date.now() + ": started async App.User.loadSelf()<br/>";
 }

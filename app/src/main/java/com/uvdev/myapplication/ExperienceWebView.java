@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.webkit.WebSettings;
@@ -31,7 +30,8 @@ import java.util.zip.ZipInputStream;
  */
 public class ExperienceWebView extends WebView {
 
-    private final ExperienceClient mExperienceClient = new ExperienceClient();
+    private final ExperienceLifecycle mLifecycle;
+    private final ExperienceClient mExperienceClient;
     private UnzipTask mUnzipTask;
     private final JavascriptResultInterface mResultInterface = new JavascriptResultInterface();
 
@@ -45,11 +45,14 @@ public class ExperienceWebView extends WebView {
 
     public ExperienceWebView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        mLifecycle = new ExperienceLifecycle(this, mResultInterface);
+        mExperienceClient = new ExperienceClient(mLifecycle);
         WebSettings settings = getSettings();
         settings.setJavaScriptEnabled(true);
         setWebViewClient(mExperienceClient);
         setWebChromeClient(new ExperienceChromeClient());
         addJavascriptInterface(mResultInterface, "HostResult");
+        addJavascriptInterface(new JSApi(), "AppUser");
     }
 
     public void loadExperience(@NonNull InputStream experienceZip, Bundle savedInstanceState) {
@@ -63,21 +66,18 @@ public class ExperienceWebView extends WebView {
     }
 
     public void saveInstanceState(Bundle outState) {
-        loadUrl("javascript:HostResult.postResult(saveExperienceState());");
-        if (!TextUtils.isEmpty(mResultInterface.result)) {
-            outState.putString("state", mResultInterface.result);
-        }
-    }
-
-    public void onPause() {
-//        evaluateJavascript("", null);
-        loadUrl("javascript:onExperiencePaused();");
+        mLifecycle.saveInstanceState(outState);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        loadUrl("javascript:onExperienceResumed();");
+        mLifecycle.onResume();
+    }
+
+    public void onPause() {
+//        evaluateJavascript("", null);
+        mLifecycle.onPause();
     }
 
     public void onExperienceUnzipped(boolean success) {

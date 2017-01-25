@@ -3,18 +3,24 @@
 package com.uvdev.myapplication;
 
 import android.os.Bundle;
+import android.util.Base64;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  *
  */
 public class ExperienceClient extends WebViewClient {
 
-    private Bundle mSavedInstanceState;
+    private final ExperienceLifecycle mLifecycle;
+    private Bundle mSavedInstanceState = null;
+
+    public ExperienceClient(ExperienceLifecycle lifecycle) {
+        mLifecycle = lifecycle;
+    }
 
     public void setSavedInstanceState(Bundle savedInstanceState) {
         mSavedInstanceState = savedInstanceState;
@@ -23,26 +29,30 @@ public class ExperienceClient extends WebViewClient {
     @Override
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
-        if (mSavedInstanceState == null) {
-            view.loadUrl("javascript:onExperienceCreated('');");
-            return;
+        injectApi(view);
+        mLifecycle.onCreate(mSavedInstanceState);
+    }
+
+    private void injectApi(WebView view) {
+        InputStream input;
+        try {
+            input = view.getContext().getAssets().open("api.js");
+            byte[] buffer = new byte[input.available()];
+            input.read(buffer);
+            input.close();
+
+            // String-ify the script byte-array using BASE64 encoding !!!
+            String encoded = Base64.encodeToString(buffer, Base64.NO_WRAP);
+            view.loadUrl("javascript:(function() {" +
+                    "var parent = document.getElementsByTagName('head').item(0);" +
+                    "var script = document.createElement('script');" +
+                    "script.type = 'text/javascript';" +
+                    // Tell the browser to BASE64-decode the string into your script !!!
+                    "script.innerHTML = window.atob('" + encoded + "');" +
+                    "parent.appendChild(script)" +
+                    "})()");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        JsonObject jsonState = new JsonObject();
-        for (String key : mSavedInstanceState.keySet()) {
-            Object value = mSavedInstanceState.get(key);
-            if (value instanceof String) {
-                jsonState.addProperty(key, (String) value);
-            } else if (value instanceof Number) {
-                jsonState.addProperty(key, (Number) value);
-            } else if (value instanceof Boolean) {
-                jsonState.addProperty(key, (Boolean) value);
-            } else if (value instanceof Character) {
-                jsonState.addProperty(key, (Character) value);
-            } else {
-                throw new IllegalArgumentException("Invalid type in state: "
-                        + value.getClass().getName());
-            }
-        }
-        view.loadUrl("javascript:onExperienceCreated('" + new Gson().toJson(jsonState) + "');");
     }
 }
