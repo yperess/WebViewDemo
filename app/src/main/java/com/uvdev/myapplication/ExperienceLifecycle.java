@@ -8,9 +8,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.WebView;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-
 /**
  *
  */
@@ -34,24 +31,9 @@ public class ExperienceLifecycle {
         mState = isValidTransition(1, 0);
         String savedInstanceStateJson = "";
         if (savedInstanceState != null) {
-            JsonObject jsonState = new JsonObject();
-            for (String key : savedInstanceState.keySet()) {
-                Object value = savedInstanceState.get(key);
-                if (value instanceof String) {
-                    jsonState.addProperty(key, (String) value);
-                } else if (value instanceof Number) {
-                    jsonState.addProperty(key, (Number) value);
-                } else if (value instanceof Boolean) {
-                    jsonState.addProperty(key, (Boolean) value);
-                } else if (value instanceof Character) {
-                    jsonState.addProperty(key, (Character) value);
-                } else {
-                    throw new IllegalArgumentException("Invalid type in state: "
-                            + value.getClass().getName());
-                }
-            }
-            savedInstanceStateJson = new Gson().toJson(jsonState);
+            savedInstanceStateJson = savedInstanceState.getString("state", "");
         }
+        Log.d(TAG, "    '" + savedInstanceStateJson + "'");
         // Call void onExperienceCreated(stateJsonString)
         mView.loadUrl("javascript:onExperienceCreated('" + savedInstanceStateJson + "');");
         if (mPendingResume) {
@@ -83,8 +65,10 @@ public class ExperienceLifecycle {
         Log.d(TAG, "saveInstanceState()");
         // Call stateJsonString saveExperienceState()
         mView.loadUrl("javascript:HostResult.postResult(saveExperienceState());");
-        if (!TextUtils.isEmpty(mResultInterface.result)) {
-            outState.putString("state", mResultInterface.result);
+        Log.d(TAG, "    '" + mResultInterface.result + "'");
+        String result = mResultInterface.waitForResult();
+        if (!TextUtils.isEmpty(result)) {
+            outState.putString("state", result);
         }
     }
 

@@ -13,8 +13,17 @@ public class JavascriptResultInterface {
     String result;
 
     @JavascriptInterface
-    public void postResult(String result) {
+    public synchronized void postResult(String result) {
         Log.d("JS", "result = '" + result + "'");
         this.result = result;
+        notify();
+    }
+
+    public synchronized String waitForResult() {
+        Log.d("JS", "waiting for result...");
+        try {
+            wait();
+        } catch (InterruptedException e) {}
+        return result;
     }
 }
